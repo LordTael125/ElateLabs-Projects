@@ -1,0 +1,21 @@
+Linux Hardening Audit Report - 2025-06-15 19:16:11.271487
+
+### Firewall Check ###
+[OK] UFW is active.
+### SSH Configuration Check ###
+[WARN] Root login via SSH is allowed.
+[WARN] Password authentication is enabled.
+### File Permissions Check ###
+[WARN] /etc/passwd has incorrect permissions: 0o644
+[WARN] /etc/shadow has incorrect permissions: 0o600
+### Services Check ###
+[OK] No insecure services detected.
+### Rootkit Check ###
+[INFO] rkhunter installed. Running check...
+[WARN] Possible rootkit issues. Review manually.
+
+=== FINAL SCORE ===
+Compliance Score: 40.00%
+
+=== RECOMMENDATIONS ===
+System is critically vulnerable. Immediate hardening recommended.
