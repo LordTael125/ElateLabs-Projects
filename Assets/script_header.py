@@ -4,8 +4,6 @@ import stat
 from datetime import datetime
 
 
-
-
 REPORT_FILE = "Report/Report.txt"
 
 def report_add(seq):
@@ -38,6 +36,7 @@ def check_firewall():
         report_add(f"[ERROR] Firewall check error: {e}")
         return 0
 
+
 def check_ssh_config():
     print("Scanning SSH Configs :")
     report_add("### SSH Configuration Check ###")
@@ -62,6 +61,7 @@ def check_ssh_config():
         report_add(f"[ERROR] SSH config check failed: {e}")
     return score
 
+
 def check_file_permissions():
     print("Checking File permissions :-")
     report_add("### File Permissions Check ###")
@@ -85,6 +85,7 @@ def check_file_permissions():
             report_add(f"[ERROR] Could not check {file}: {e}")
     return score
 
+
 def check_services():
     print("Scanning services :-")
     report_add("### Services Check ###")
@@ -104,12 +105,13 @@ def check_services():
         report_add(f"[ERROR] Service check failed: {e}")
         return 0
 
+
 def check_rootkits():
     print("Scanning rootkit :-")
     report_add("### Rootkit Check ###")
     score = 0
     try:
-        subprocess.check_output(['which', 'rkhunter'], text=True)
+        presence = subprocess.check_output(['which', 'rkhunter'], text=True)
         report_add("[INFO] rkhunter installed. Running check...")
         output = subprocess.run(
             ['sudo', 'rkhunter', '--check',"--sk"],
@@ -125,7 +127,7 @@ def check_rootkits():
         else:
             report_add("[WARN] Possible rootkit issues. Review manually.")
         print("Rootkit Scanned successfully")
-    except FileNotFoundError:
+    except subprocess.CalledProcessError:
         report_add("[INFO] rkhunter not installed. Skipping.")
     return score
 
@@ -164,6 +166,7 @@ def main():
 
     generate_score(total_score, max_score)
     print(f"Audit complete. Report saved to {REPORT_FILE}")
+
 
 if __name__ == "__main__":
     main()
