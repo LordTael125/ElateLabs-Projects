@@ -17,9 +17,9 @@
    <widget class="QPushButton" name="Help">
     <property name="geometry">
      <rect>
-      <x>600</x>
-      <y>510</y>
-      <width>91</width>
+      <x>570</x>
+      <y>500</y>
+      <width>111</width>
       <height>34</height>
      </rect>
     </property>
@@ -66,8 +66,8 @@
    <widget class="QPushButton" name="Encrypt">
     <property name="geometry">
      <rect>
-      <x>180</x>
-      <y>340</y>
+      <x>120</x>
+      <y>410</y>
       <width>171</width>
       <height>34</height>
      </rect>
@@ -79,8 +79,8 @@
    <widget class="QPushButton" name="Decrypt">
     <property name="geometry">
      <rect>
-      <x>400</x>
-      <y>340</y>
+      <x>340</x>
+      <y>410</y>
       <width>171</width>
       <height>34</height>
      </rect>
@@ -105,8 +105,8 @@
    <widget class="QPushButton" name="About">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>510</y>
+      <x>10</x>
+      <y>500</y>
       <width>171</width>
       <height>34</height>
      </rect>
@@ -119,7 +119,7 @@
     <property name="geometry">
      <rect>
       <x>710</x>
-      <y>160</y>
+      <y>170</y>
       <width>33</width>
       <height>34</height>
      </rect>
@@ -132,7 +132,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>160</y>
+      <y>170</y>
       <width>651</width>
       <height>32</height>
      </rect>
@@ -142,7 +142,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>200</y>
+      <y>220</y>
       <width>231</width>
       <height>22</height>
      </rect>
@@ -154,14 +154,79 @@
    <widget class="QPushButton" name="Done">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>510</y>
-      <width>88</width>
+      <x>687</x>
+      <y>500</y>
+      <width>101</width>
       <height>34</height>
      </rect>
     </property>
     <property name="text">
      <string>Done</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="saveButton">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>440</y>
+      <width>181</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save to File</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="AESKey">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>270</y>
+      <width>431</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="maxLength">
+     <number>10</number>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="AESiv">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>350</y>
+      <width>431</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="maxLength">
+     <number>8</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>280</y>
+      <width>201</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Enter the Key for AES Cipher : -</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>350</y>
+      <width>231</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Enter the initialization vector : -</string>
     </property>
    </widget>
   </widget>
@@ -174,23 +239,15 @@
      <height>30</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="menuAbout">
     <property name="title">
-     <string>File</string>
+     <string>About</string>
     </property>
-    <addaction name="actionOpen"/>
-    <addaction name="actionRecent"/>
+    <addaction name="Version"/>
     <addaction name="separator"/>
-    <addaction name="actionExit"/>
+    <addaction name="AboutTool"/>
    </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionVersion"/>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuHelp"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
@@ -211,6 +268,16 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="Version">
+   <property name="text">
+    <string>Version</string>
+   </property>
+  </action>
+  <action name="AboutTool">
+   <property name="text">
+    <string>About Tool</string>
    </property>
   </action>
  </widget>
