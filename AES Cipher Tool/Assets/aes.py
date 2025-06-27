@@ -6,10 +6,16 @@ from PyQt6.QtWidgets import QFileDialog, QApplication, QMessageBox
 from PyQt6 import QtWidgets, uic ,QtCore, QtGui
 import os, sys, json, struct, pathlib
 
+def resource_path(relative_path):
+    """Get absolute path to resource, compatible with PyInstaller."""
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.abspath(relative_path)
+
 class UIHandler(QtWidgets.QMainWindow) :
     def __init__(self, path) :
         super(UIHandler, self).__init__()
-        ui_path = path
+        ui_path = resource_path(path)
         uic.loadUi(ui_path,self)
 
         self.uierrDict={2103:"fileMiss",2104:"SavePthMiss",1098:"nonENC",3012:"keyErr",3013:"ivErr"}
@@ -74,7 +80,9 @@ class UIHandler(QtWidgets.QMainWindow) :
 
 
     def choose_file(self):
-        self.file_path, _ = QFileDialog.getOpenFileName(self, "Choose File")
+        options = QFileDialog.Option.DontUseNativeDialog
+        self.file_path, _ = QFileDialog.getOpenFileName(self, "Choose File", "", "All Files (*)", options=options)
+
         if self.file_path:
             self.filePathlnEdit.setText(self.file_path)
             if self.CheckSamePath.isChecked():
@@ -87,7 +95,8 @@ class UIHandler(QtWidgets.QMainWindow) :
             path=os.path.dirname(self.file_path)
             self.SavePathlnEdit.setText(path)
         else :
-            self.dir_path = QFileDialog.getExistingDirectory(self, "Choose Path")
+            self.dir_path = QFileDialog.getExistingDirectory(self, "Choose Path", options=QFileDialog.Option.DontUseNativeDialog)
+
             if self.dir_path :
                 self.SavePathlnEdit.setText(self.dir_path)
 
@@ -114,6 +123,15 @@ class UIHandler(QtWidgets.QMainWindow) :
 
     def version_dialog(self):
         QMessageBox.information()
+
+    def complete_dialog(self,code):
+        proc_box = {
+            1001 : ("Encryption Complete","Encryption of the file has been completed\nPress Save to File to export encrypted File"),
+            1002 : ("Decryption Complete","Decryption of the file has been completed\nPress Save to File to export decrypted File"),
+            1003 : ("File Saved","The File has been saved to destination")
+        }
+        title,msg = proc_box.get(code,("Process Done","The process has been sucessfully been completed"))
+        QMessageBox.information(self,title,msg)
 
     def on_checkbox_toggle(self) :
         if self.CheckSamePath.isChecked() :
@@ -154,6 +172,7 @@ class UIHandler(QtWidgets.QMainWindow) :
             self.data = aes.encrypt()
             self.flag="encr"
             print(self.data.hex())
+            self.complete_dialog(1001)
             return self.data
         else :
             self.uierrorBox(2103)
@@ -170,6 +189,7 @@ class UIHandler(QtWidgets.QMainWindow) :
                 self.data = aes.decrypt()
                 self.flag="decr"
                 print(self.data.hex())
+                self.complete_dialog(1002)
                 return self.data
             else :
                 self.uierrorBox(1104)
@@ -188,6 +208,7 @@ class UIHandler(QtWidgets.QMainWindow) :
             else:
                 original_ext = self.metadata.get("original_ext") if self.metadata else None
                 self.callFileFunc.write_decrypted_binary(self.data, original_ext=original_ext)
+            self.complete_dialog(1003)
         else: self.uierrorBox(2104)
 
 
