@@ -18,6 +18,8 @@ class UIHandler(QtWidgets.QMainWindow) :
         self.file_path = None
         self.dir_path = None
         self.data = None
+        self.flag = None
+        self.metadata = None
 
         
 
@@ -69,9 +71,6 @@ class UIHandler(QtWidgets.QMainWindow) :
 
         self.aeskey.setValidator(validator)
         self.aesiv.setValidator(validator)
-        
-
-        
 
 
     def choose_file(self):
@@ -123,29 +122,37 @@ class UIHandler(QtWidgets.QMainWindow) :
             if self.file_path :
                 path=os.path.dirname(self.file_path)
                 self.SavePathlnEdit.setText(path)
+                self.dir_path=path
 
         else :
             self.SavePathButton.setEnabled(True)
             self.SavePathlnEdit.setEnabled(True)
             self.SavePathlnEdit.clear()
          
+    def validate_and_set_keys(self, aes):
+        key = self.aeskey.text().strip()
+        iv = self.aesiv.text().strip()
+        if not key:
+            self.uierrorBox(3012)
+            return False
+        if not iv:
+            self.uierrorBox(3013)
+            return False
+        aes.generateKey(key)
+        aes.generateIV(iv)
+        return True
+
+
 
     def encryptFile(self) :
         if self.file_path:
             self.callFileFunc = FileHandler(self.file_path,self.dir_path)
             dataToEncr = self.callFileFunc.readBinary()
-            aes = AEShandler(dataToEncr)
-            key = self.aeskey.text()
-            value_key = key if key.strip() else None
-            if value_key :
-                iv = self.aesiv.text()
-                value_iv = iv if iv.strip() else None
-                if value_iv : 
-                    hash_key = aes.generateKey(value_key)
-                    hash_iv = aes.generateIV(value_iv)
-                else : self.uierrorBox(3013)
-            else : self.uierrorBox(3012)
+            aes = AEShandler(plaintext=dataToEncr)
+            if not self.validate_and_set_keys(aes) :
+                return
             self.data = aes.encrypt()
+            self.flag="encr"
             print(self.data.hex())
             return self.data
         else :
@@ -155,98 +162,57 @@ class UIHandler(QtWidgets.QMainWindow) :
         if self.file_path :
             base, ext = os.path.splitext(self.file_path)
             if ext == ".enc" :
-                self.callFileFunc = FileHandler(self.file_path)
-                dataToDecr = self.callFileFunc.readBinary()
-                aes = AEShandler(dataToDecr)
-                key = self.aeskey.text()
-                value_key = key if key.strip() else None
-                if value_key :
-                    iv = self.aesiv.text()
-                    value_iv = iv if iv.strip() else None
-                    if value_iv : 
-                        hash_key = aes.generateKey(value_key)
-                        hash_iv = aes.generateIV(value_iv)
-                    else : self.uierrorBox(3013)
-                else : self.uierrorBox(3012)
-                data = aes.decrypt()
-                print(data.hex())
-                return data
+                self.callFileFunc = FileHandler(self.file_path,self.dir_path)
+                dataToDecr, self.metadata = self.callFileFunc.read_binary_with_metadata()
+                aes = AEShandler(cipherText=dataToDecr)
+                if not self.validate_and_set_keys(aes) :
+                    return
+                self.data = aes.decrypt()
+                self.flag="decr"
+                print(self.data.hex())
+                return self.data
             else :
                 self.uierrorBox(1104)
         else : self.uierrorBox(2103)
 
-    def save_to_file(self,saveData) :
+    def save_to_file(self) :
         path = self.SavePathlnEdit.text()
         full_path = path if path.strip() else None
+        self.dir_path=path
         if full_path :
-            self.callFileFunc.write_binary(self.data)
-            
+            if self.flag == "encr" :
+                self.metadata = {
+                    "original_ext": os.path.splitext(self.file_path)[1]
+                }
+                self.callFileFunc.write_encrypted_binary(self.data,metadata=self.metadata)
+            else:
+                original_ext = self.metadata.get("original_ext") if self.metadata else None
+                self.callFileFunc.write_decrypted_binary(self.data, original_ext=original_ext)
         else: self.uierrorBox(2104)
 
 
-    def uierrorBox(self,code):
-        if code == 2103 :
-            QMessageBox.information(
-                self,
-                "Error :- 2103 \n",
-                "Enter The file to encrypt/decrypt"
-            )
-        elif code == 2104 :
-            QMessageBox.information(
-                self,
-                "Error :- 2104 \n",
-                "Enter the path to save the file to"
-            )
-        elif code == 3321 :
-            QMessageBox.information(
-                self,
-                "Error :- 3321 \n",
-                "Enter The path to save the file to\n"
-                "You can click the checkbox to save the file to same directory as the file "
-            )
-
-        elif code == 1104 :
-            QMessageBox.information(
-                self,
-                "Error :- 1104 \n",
-                "The File is not decryptable\n"
-                "Select the files with .enc extension"
-            )
-
-        elif code == 3012 :
-            QMessageBox.information(
-                self,
-                "Error :- 3012 \n",
-                "The key has not been provided\n"
-                "To encrypt/decrypt the file please enter the key"
-            )
-        elif code == 3013 :
-            QMessageBox.information(
-                self,
-                "Error :- 3013 \n",
-                "The initialization vector has not been provided\n"
-                "To remove any redundancy please enter iv"
-            )
-
-        else :
-            QMessageBox.information(
-                self,
-                "Error :- 404 \n",
-                "Error :- Something went wrong with the application"
-                "Please restart the application and try again"
-            )
+    def uierrorBox(self, code):
+        error_map = {
+            2103: ("Error :- 2103", "Enter the file to encrypt/decrypt"),
+            2104: ("Error :- 2104", "Enter the path to save the file"),
+            1104: ("Error :- 1104", "The File is not decryptable\nSelect the files with .enc extension"),
+            3012: ("Error :- 3012", "The key has not been provided"),
+            3013: ("Error :- 3013", "The IV has not been provided"),
+            3321: ("Error :- 3321", "Enter path to save file or check the checkbox for same directory"),
+        }
+        title, msg = error_map.get(code, ("Error :- 404", "Unknown error. Restart the application."))
+        QMessageBox.information(self, title, msg)
+        if code not in error_map:
             QApplication.exit()
 
 
 class AEShandler :
 
-    def __init__(self,message : bytes):
+    def __init__(self, plaintext: bytes = None, cipherText: bytes = None):
         self.key = None
         self.iv = None
-        self.message = message
-
-        
-        self.cipherText = None
+        self.message = plaintext
+        self.cipherText = cipherText
         self.plaintext = None
 
     def generateKey(self, secret : str) -> bytes:
@@ -265,6 +231,8 @@ class AEShandler :
         return self.cipherText
 
     def decrypt(self) :
+        if self.cipherText is None:
+            raise ValueError("cipherText is None — cannot decrypt!")
         self.decipher = AES.new(self.key, AES.MODE_CBC, self.iv)
         self.plaintext = unpad(self.decipher.decrypt(self.cipherText), AES.block_size)
         return self.plaintext
@@ -281,38 +249,53 @@ class FileHandler :
         with open(self.path, "rb") as f :
             self.data = f
             return f.read()
+        
+    def read_binary_with_metadata(self):
+        with open(self.path, "rb") as f:
+            length_data = f.read(4)
+            if len(length_data) != 4:
+                raise ValueError("Corrupted or missing metadata header")
+            meta_len = struct.unpack("I", length_data)[0]
+            metadata = json.loads(f.read(meta_len))
+            data = f.read()
+            return data, metadata
 
 
-    def write_binary(self, data: bytes, metadata: dict = None, suffix: str = ".enc") -> str:
-        
-        
+
+    def write_encrypted_binary(self, data: bytes, suffix:str=".enc", metadata: dict = None) -> str:
         original_path = pathlib.Path(self.path)
         output_dir = pathlib.Path(self.save_path)
-        output_dir.mkdir(parents=True, exist_ok=True)  # ensure directory exists
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-        name, flag  = os.path.splitext(self.path)
-        print("The extension is :- ",flag)
+        output_name = original_path.name + suffix
+        output_path = output_dir / output_name
 
-        # Construct output filename
-        original_name = original_path.name  
-        if flag == "encr":
-            output_name = original_name + suffix
-        else:  # decryption: remove suffix if present
-            output_name = original_name
-            if output_name.endswith(suffix):
-                output_name = output_name[:-len(suffix)]  # e.g., "photo.jpg"
+        with open(output_path, 'wb') as fb:
+            if metadata:
+                meta_json = json.dumps(metadata).encode("utf-8")
+                fb.write(struct.pack("I", len(meta_json)))
+                fb.write(meta_json)
+            fb.write(data)
+
+        return str(output_path)
+    
+
+    def write_decrypted_binary(self, data: bytes, original_ext=None) -> str:
+        original_path = pathlib.Path(self.path)
+        output_dir = pathlib.Path(self.save_path)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        base_name = original_path.stem  # removes '.enc'
+
+        if original_ext:
+            output_name = base_name + original_ext
+        else:
+            output_name = base_name  # fallback
 
         output_path = output_dir / output_name
 
-        # Write data (with optional metadata during encryption)
         with open(output_path, 'wb') as fb:
-            if metadata and flag == "encr":
-                meta_json = json.dumps(metadata).encode("utf-8")
-                fb.write(struct.pack("I", len(meta_json)))  # 4-byte length prefix
-                fb.write(meta_json)
-                fb.write(data)
-            else:
-                fb.write(data)
+            fb.write(data)
 
         return str(output_path)
 
